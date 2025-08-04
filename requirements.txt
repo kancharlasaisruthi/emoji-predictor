@@ -1,0 +1,16 @@
+scikit-learn
+numpy
+pandas
+
+seaborn
+matplotlib
+flask
+ipykernel
+streamlit
+tensorflow
+tensorboard
+nltk
+transformers
+torch
+torchaudio
+torchvision
