@@ -1,31 +1,34 @@
 import streamlit as st 
 import numpy as np
 import pickle
+import json
+import torch
+import io
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.sequence import pad_sequences
+from sentence_transformers import SentenceTransformer
+# Load trained LSTM model
+model = load_model('LSTM.h5')
 
-model = load_model('bidirectionRNN.h5')
 
-with open('tokenizer.pickle', 'rb') as handle:
-    tokenizer = pickle.load(handle)
+tokenizer = SentenceTransformer("all-MiniLM-L6-v2")
 
-emoji_dict = {}
-with open('../datasets/emoji/mapping.txt', 'r', encoding='utf-8') as f:
-    for line in f:
-        parts = line.strip().split('\t')
-        if len(parts) >= 2:
-            idx, emoji = int(parts[0]), parts[1]
-            emoji_dict[idx] = emoji
 
-def predict_emoji(model, tokenizer, text, max_sequence_len):
-    token_list = tokenizer.texts_to_sequences([text])[0]
-    if len(token_list) >= max_sequence_len:
-        token_list = token_list[-(max_sequence_len - 1):]
-    token_list = pad_sequences([token_list], maxlen=max_sequence_len - 1, padding='pre')
-    predicted = model.predict(token_list, verbose=0)
-    predicted_index = np.argmax(predicted, axis=1)[0]
-    return predicted_index
 
+# Load emoji mapping from JSON
+with open('emoji_map.json', 'r', encoding='utf-8') as f:
+    emoji_data = json.load(f)
+emoji_dict = {int(k): v[0] for k, v in emoji_data.items()}
+
+def prdict_emoji(model,tokenizer,text):
+    token_list=tokenizer.encode([text])
+    token_list=token_list.reshape(token_list.shape[0],1,token_list.shape[1])
+    predicted=model.predict(token_list,verbose=0)
+    predicted_word_index=np.argmax(predicted,axis=1)  ## This line means: which word have high probability take that index
+
+    return predicted_word_index
+
+# Streamlit UI
 st.set_page_config(page_title="Emoji Predictor", page_icon="😊", layout="centered")
 st.markdown("""
 <style>
@@ -98,7 +101,6 @@ st.markdown("""
         box-shadow: 0 0 10px rgba(116, 185, 255, 0.2);
     }
 </style>
-
 """, unsafe_allow_html=True)
 
 st.markdown('<h1 class="title">😊 Emoji Predictor</h1>', unsafe_allow_html=True)
@@ -108,8 +110,7 @@ input_text = st.text_input("Your message:", placeholder="I'm feeling happy today
 if st.button("🎯 Predict Emoji"):
     if input_text.strip():
         with st.spinner("Thinking..."):
-            max_sequence_len = model.input_shape[1] + 1
-            emoji_index = predict_emoji(model, tokenizer, input_text, max_sequence_len)
+            emoji_index = prdict_emoji(model, tokenizer, input_text)
             predicted_emoji = emoji_dict.get(emoji_index, "❓")
         
         st.markdown(f"""

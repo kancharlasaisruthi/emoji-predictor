@@ -1,0 +1,4 @@
+20	😡	anger
+21	😄	joy
+22	🤞	optimism
+23	😢	sadness

@@ -1,0 +1,3 @@
+30	😞	negative
+31	😐	neutral
+32	😄	positive
