@@ -11,9 +11,12 @@ from sentence_transformers import SentenceTransformer
 model = load_model('LSTM.h5')
 
 
+torch.set_default_device("cpu")
+
+
+
+# Later, always load from local copy
 tokenizer = SentenceTransformer("all-MiniLM-L6-v2")
-
-
 
 # Load emoji mapping from JSON
 with open('emoji_map.json', 'r', encoding='utf-8') as f:
@@ -111,7 +114,8 @@ if st.button("🎯 Predict Emoji"):
     if input_text.strip():
         with st.spinner("Thinking..."):
             emoji_index = prdict_emoji(model, tokenizer, input_text)
-            predicted_emoji = emoji_dict.get(emoji_index, "❓")
+            emoji_index = int(emoji_index[0])
+            predicted_emoji = emoji_dict.get(emoji_index)
         
         st.markdown(f"""
         <div class="result-box">
